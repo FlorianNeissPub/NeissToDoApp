@@ -1,0 +1,67 @@
+type Todo = {
+  title: string;
+  id: string;
+  is_completed: boolean;
+};
+
+type FormProps = {
+  todos: Todo[];
+  setTodos: React.Dispatch<React.SetStateAction<Todo[]>>;
+};
+
+function Form({ todos, setTodos }: FormProps) {
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const form = event.target as HTMLFormElement;
+    const value = (form.elements.namedItem("todo") as HTMLInputElement).value;
+    const newTodo = {
+      title: value,
+      id: self.crypto.randomUUID(),
+      is_completed: false,
+    };
+
+    // Update todo state
+    setTodos((prevTodos) => [...prevTodos, newTodo]);
+
+    // Store updated todo list in local storage
+    const updatedTodoList = JSON.stringify([...todos, newTodo]);
+    localStorage.setItem("todos", updatedTodoList);
+
+    (event.target as HTMLFormElement).reset();
+  };
+
+  return (
+    <form className="form" onSubmit={handleSubmit}>
+      <label htmlFor="todo">
+        <input
+          type="text"
+          name="todo"
+          id="todo"
+          placeholder="Write your next task"
+        />
+      </label>
+
+      <button>
+        <span className="visually-hidden">Submit</span>
+        <svg
+          clipRule="evenodd"
+          fillRule="evenodd"
+          strokeLinejoin="round"
+          strokeMiterlimit="2"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+          width={32}
+          height={32}
+        >
+          <path
+            d="m11 11h-7.25c-.414 0-.75.336-.75.75s.336.75.75.75h7.25v7.25c0 .414.336.75.75.75s.75-.336.75-.75v-7.25h7.25c.414 0 .75-.336.75-.75s-.336-.75-.75-.75h-7.25v-7.25c0-.414-.336-.75-.75-.75s-.75.336-.75.75z"
+            fillRule="nonzero"
+          />
+        </svg>
+      </button>
+    </form>
+  );
+}
+
+export default Form;
