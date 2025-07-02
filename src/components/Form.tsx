@@ -1,34 +1,43 @@
-type Todo = {
-  title: string;
-  id: string;
-  is_completed: boolean;
-};
+import { Todo } from "@/types/types";
 
 type FormProps = {
   todos: Todo[];
   setTodos: React.Dispatch<React.SetStateAction<Todo[]>>;
 };
 
-function Form({ todos, setTodos }: FormProps) {
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+/**
+ * Form component for adding new todos.
+ *
+ * Renders a controlled form with an input field and a submit button.
+ * On submission, sends the new todo to the backend API (`/api/handler`)
+ * via a POST request, and updates the todo list state with the response.
+ *
+ * @param setTodos - State setter function to update the list of todos.
+ *
+ * @example
+ * <Form setTodos={setTodos} />
+ */
+function Form({ setTodos }: FormProps) {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const form = event.target as HTMLFormElement;
     const value = (form.elements.namedItem("todo") as HTMLInputElement).value;
-    const newTodo = {
-      title: value,
-      id: self.crypto.randomUUID(),
-      is_completed: false,
-    };
+    if (!value.trim()) return;
 
-    // Update todo state
+    // Send new todo to backend handler
+    const res = await fetch('/api/handler', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: value, id: self.crypto.randomUUID(), is_completed: false }),
+    });
+    if (!res.ok) return;
+    const newTodo = await res.json();
+
+    // Update todo state with response from backend
     setTodos((prevTodos) => [...prevTodos, newTodo]);
 
-    // Store updated todo list in local storage
-    const updatedTodoList = JSON.stringify([...todos, newTodo]);
-    localStorage.setItem("todos", updatedTodoList);
-
-    (event.target as HTMLFormElement).reset();
+    form.reset();
   };
 
   return (

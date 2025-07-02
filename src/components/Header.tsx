@@ -1,3 +1,8 @@
+/**
+ * Renders the application header with a TODO title and a checkmark SVG icon.
+ *
+ * @returns {JSX.Element} The header component containing an SVG icon and a heading.
+ */
 function Header() {
   return (
     <header>

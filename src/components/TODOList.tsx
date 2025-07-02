@@ -1,65 +1,68 @@
-import React from "react";
-
-type Todo = {
-  id: string;
-  title: string;
-  is_completed: boolean;
-};
+import { Todo } from "@/types/types";
+import React, { useEffect, useRef, useState } from "react";
 
 type TODOListProps = {
   todos: Todo[];
   setTodos: React.Dispatch<React.SetStateAction<Todo[]>>;
 };
 
-function TODOList({ todos, setTodos }: TODOListProps) {
-  return (
-    <ol className="todo_list">
-      {todos && todos.length > 0 ? (
-        todos?.map((item, index) => (
-          <Item key={index} item={item} todos={todos} setTodos={setTodos} />
-        ))
-      ) : (
-        <p>Seems lonely in here, what are you up to?</p>
-      )}
-    </ol>
-  );
-}
+/**
+ * Renders a list of TODO items or a placeholder message if the list is empty.
+ *
+ * @component
+ * @param {TODOListProps} props - The props for the TODOList component.
+ * @param {Array<Todo>} props.todos - The array of TODO items to display.
+ * @param {React.Dispatch<React.SetStateAction<Todo[]>>} props.setTodos - The state setter function for updating the TODO list.
+ * @returns {JSX.Element} An ordered list of TODO items or a message if there are no items.
+ */
+const TODOList: React.FC<TODOListProps> = ({ todos, setTodos }) => (
+  <ol className="todo_list">
+    {todos && todos.length > 0 ? (
+      todos.map((item) => (
+        <Item key={item.id} item={item} setTodos={setTodos} />
+      ))
+    ) : (
+      <p>Seems lonely in here, what are you up to?</p>
+    )}
+  </ol>
+);
 
-function Item({
-  item,
-  todos,
-  setTodos,
-}: {
+type ItemProps = {
   item: Todo;
-  todos: Todo[];
   setTodos: React.Dispatch<React.SetStateAction<Todo[]>>;
-}) {
-  const [editing, setEditing] = React.useState(false);
-  const inputRef = React.useRef<HTMLInputElement>(null);
+};
 
-  const completeTodo = () => {
+const Item: React.FC<ItemProps> = ({ item, setTodos }) => {
+  const [editing, setEditing] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const updateItem = async (id: string, updatedFields: Partial<Todo>) => {
+    const res = await fetch(`/api/items?id=${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedFields),
+    });
+    if (!res.ok) return;
+    const updatedItem = await res.json();
     setTodos((prevTodos) =>
-      prevTodos.map((todo) =>
-        todo.id === item.id
-          ? { ...todo, is_completed: !todo.is_completed }
-          : todo
-      )
+      prevTodos.map((todo) => (todo.id === id ? updatedItem : todo))
     );
-
-    // Update localStorage after marking todo as completed
-    const updatedTodos = JSON.stringify(todos);
-    localStorage.setItem("todos", updatedTodos);
   };
 
-  const handleEdit = () => {
-    setEditing(true);
+  const deleteItem = async (id: string) => {
+    await fetch(`/api/items?id=${id}`, { method: 'DELETE' });
+    setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== id));
   };
 
-  React.useEffect(() => {
+  const completeTodo = async () => {
+    await updateItem(item.id, { is_completed: !item.is_completed });
+  };
+
+  const handleEdit = () => setEditing(true);
+
+  useEffect(() => {
     if (editing && inputRef.current) {
       inputRef.current.focus();
-
-      // position the cursor at the end of the text
       inputRef.current.setSelectionRange(
         inputRef.current.value.length,
         inputRef.current.value.length
@@ -67,55 +70,25 @@ function Item({
     }
   }, [editing]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTodos((prevTodos) =>
-      prevTodos.map((todo) =>
-        todo.id === item.id ? { ...todo, title: e.target.value } : todo
-      )
-    );
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    updateItem(item.id, { title: e.target.value });
   };
 
-  const handleInputSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    // Update localStorage after editing todo
-    const updatedTodos = JSON.stringify(todos);
-    localStorage.setItem("todos", updatedTodos);
-
-    setEditing(false);
-  };
-
-  const handleInputBlur = () => {
-    // Update localStorage after editing todo
-    const updatedTodos = JSON.stringify(todos);
-    localStorage.setItem("todos", updatedTodos);
-
-    setEditing(false);
-  };
-
-  const handleDelete = () => {
-    setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== item.id));
-
-    // Update localStorage after deleting todo
-    const updatedTodos = JSON.stringify(
-      todos.filter((todo) => todo.id !== item.id)
-    );
-    localStorage.setItem("todos", updatedTodos);
-  };
+  const handleEditBlur = () => setEditing(false);
 
   return (
-    <li id={item?.id} className="todo_item">
+    <li id={item.id} className="todo_item">
       {editing ? (
-        <form className="edit-form" onSubmit={handleInputSubmit}>
-          <label htmlFor="edit-todo">
+        <form className="edit-form" onSubmit={e => e.preventDefault()}>
+          <label htmlFor={`edit-todo-${item.id}`}>
             <input
               ref={inputRef}
               type="text"
-              name="edit-todo"
-              id="edit-todo"
-              defaultValue={item?.title}
-              onBlur={handleInputBlur}
-              onChange={handleInputChange}
+              name={`edit-todo-${item.id}`}
+              id={`edit-todo-${item.id}`}
+              defaultValue={item.title}
+              onBlur={handleEditBlur}
+              onChange={handleEditChange}
             />
           </label>
         </form>
@@ -141,7 +114,7 @@ function Item({
                 item.is_completed ? { textDecoration: "line-through" } : {}
               }
             >
-              {item?.title}
+              {item.title}
             </p>
           </button>
           <div className="todo_items_right">
@@ -163,7 +136,7 @@ function Item({
                 />
               </svg>
             </button>
-            <button onClick={handleDelete}>
+            <button onClick={() => deleteItem(item.id)}>
               <span className="visually-hidden">Delete</span>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -186,6 +159,6 @@ function Item({
       )}
     </li>
   );
-}
+};
 
 export default TODOList;
