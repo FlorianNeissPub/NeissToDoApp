@@ -47,7 +47,7 @@ function Form({ setTodos }: FormProps) {
           type="text"
           name="todo"
           id="todo"
-          placeholder="Write your next task"
+          placeholder="Schreiben Sie den Nächsten Punkt auf Ihre To-Do-Liste"
         />
       </label>
 

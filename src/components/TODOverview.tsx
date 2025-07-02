@@ -16,8 +16,8 @@ function TODOverview({ todos_completed, total_todos }: TODOverviewProps) {
   return (
     <section className="todohero_section">
       <div>
-        <p className="text_large">Task Done</p>
-        <p className="text_small">Keep it up</p>
+        <p className="text_large">Aufgabe erledigt</p>
+        <p className="text_small">bleiben Sie dran</p>
       </div>
       <div>
         {todos_completed}/{total_todos}

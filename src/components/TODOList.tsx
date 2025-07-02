@@ -22,7 +22,7 @@ const TODOList: React.FC<TODOListProps> = ({ todos, setTodos }) => (
         <Item key={item.id} item={item} setTodos={setTodos} />
       ))
     ) : (
-      <p>Seems lonely in here, what are you up to?</p>
+      <p>Sieht ein bisschen leer aus. Fügen Sie mehr Aufgaben hinzu.</p>
     )}
   </ol>
 );
@@ -37,7 +37,7 @@ const Item: React.FC<ItemProps> = ({ item, setTodos }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const updateItem = async (id: string, updatedFields: Partial<Todo>) => {
-    const res = await fetch(`/api/items?id=${id}`, {
+    const res = await fetch(`/api/handler?id=${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updatedFields),
@@ -50,7 +50,7 @@ const Item: React.FC<ItemProps> = ({ item, setTodos }) => {
   };
 
   const deleteItem = async (id: string) => {
-    await fetch(`/api/items?id=${id}`, { method: 'DELETE' });
+    await fetch(`/api/handler?id=${id}`, { method: 'DELETE' });
     setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== id));
   };
 

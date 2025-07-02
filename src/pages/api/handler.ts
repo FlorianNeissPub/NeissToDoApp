@@ -21,13 +21,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   await dbConnect();
 
   if (req.method === 'GET') {
-    console.log('Received GET request');
     const items = await Todo.find().sort({ createdAt: -1 });
     return res.status(200).json(items);
   }
 
   if (req.method === 'POST') {
-    console.log('Received POST request with body:', req.body);
     const newItem = await Todo.create({
       title: req.body.title, id: req.body.id, is_completed: req.body.is_completed
     });
@@ -35,22 +33,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === 'DELETE') {
-    console.log('Received DELETE request with query:', req.query);
     const { id } = req.query;
-    await Todo.findByIdAndDelete(id as string);
+    await Todo.deleteOne({id: id as string});
     return res.status(204).end();
   }
 
-  if (req.method === 'PUT') {
-    console.log('Received PUT request with query:', req.query, 'and body:', req.body);
-    const { id } = req.query;
-    const updateData = req.body;
-    const updatedTodo = await Todo.findByIdAndUpdate(id as string, updateData, { new: true });
-    if (!updatedTodo) {
-      return res.status(404).json({ message: 'Todo not found' });
-    }
-    return res.status(200).json(updatedTodo);
+if (req.method === 'PUT') {
+  const { id } = req.query;
+  const updateData = req.body;
+  const updatedTodo = await Todo.findOneAndUpdate(
+    { id: id as string },
+    updateData,
+    { new: true }
+  );
+  if (!updatedTodo) {
+    return res.status(404).json({ message: 'Todo not found' });
   }
+  return res.status(200).json(updatedTodo);
+}
 
   res.setHeader('Allow', ['GET', 'POST', 'DELETE', 'PUT']);
   res.status(405).end(`Method ${req.method} Not Allowed`);
